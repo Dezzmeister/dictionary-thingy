@@ -7,8 +7,8 @@ import java.io.InputStreamReader;
 public final class Main {
 	
 	
-	public static final void main(final String[] args) throws IOException {
-		final CommandHandler commandHandler = new CommandHandler();
+	public static final void main(final String[] args) throws IOException {		
+		final CommandHandler commandHandler = new CommandHandler();		
 		final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
 		while (true) {

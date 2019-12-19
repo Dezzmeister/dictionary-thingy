@@ -2,12 +2,18 @@ package com.dezzy.dictionary.main;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A named dictionary that maps String words and phrases to String definitions.
@@ -19,6 +25,10 @@ public final class Dictionary implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 7979506156638295020L;
+	
+	static {
+		System.getProperty("line.separator");
+	}
 	
 	/**
 	 * Name of the dictionary
@@ -82,6 +92,46 @@ public final class Dictionary implements Serializable {
 		
 		return (definition == null) ? Optional.empty() : Optional.of(definition);
 	}
+	
+	/**
+	 * Returns a text representation of this dictionary with all words (in alphabetical order) and their definitions.
+	 * 
+	 * @return text version of this dictionary (human readable)
+	 */
+	@Override
+	public final String toString() {
+		final Set<String> words = definitions.keySet();
+		final List<String> sortedWords = new ArrayList<String>();
+		for (String word : words) {
+			sortedWords.add(word);
+		}
+		Collections.sort(sortedWords);
+		
+		final StringBuilder sb = new StringBuilder(name + System.lineSeparator());
+		
+		for (String word : sortedWords) {
+			final String definition = definitions.get(word);
+			
+			sb.append(System.lineSeparator() + word + ":\t" + definition);
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * Serializes this Dictionary and saves it to a file.
+	 * 
+	 * @param path path of the file
+	 * @throws IOException if there is a problem creating/writing to the file
+	 */
+	public final void save(final String path) throws IOException {
+		final FileOutputStream fos = new FileOutputStream(new File(path));
+		final ObjectOutputStream oos = new ObjectOutputStream(fos);
+		
+		oos.writeObject(this);
+		
+		oos.close();
+	}
 
 	/**
 	 * Loads a serialized Dictionary from a file.
@@ -97,7 +147,6 @@ public final class Dictionary implements Serializable {
 		final Dictionary dictionary = (Dictionary) ois.readObject();
 		
 		ois.close();
-		fis.close();
 		
 		return dictionary;
 	}
