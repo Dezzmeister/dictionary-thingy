@@ -207,7 +207,7 @@ public final class Dictionary implements Serializable {
 	}
 	
 	/**
-	 * Returns a readable definition string containing a word and its defintion.
+	 * Returns a readable definition string containing a word and its definition.
 	 * 
 	 * @param word word/phrase
 	 * @return definition string
