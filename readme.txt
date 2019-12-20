@@ -2,7 +2,7 @@ This program lets you create, edit, and mess around with text dictionaries.
 
 How to use it:
 1. You need Java
-2. Run 'run.bat' 
+2. Run 'run.bat' in the dictionary folder 
 3. Enter commands
 
 
