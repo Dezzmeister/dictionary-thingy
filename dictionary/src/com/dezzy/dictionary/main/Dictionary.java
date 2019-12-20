@@ -118,7 +118,7 @@ public final class Dictionary implements Serializable {
 		@Override
 		public int compare(final SearchResult s1, final SearchResult s2) {
 			if (s1.score == s2.score) {
-				return s1.definitionString.compareTo(s2.definitionString);
+				return s2.definitionString.compareTo(s1.definitionString);
 			} else if (s1.score > s2.score) {
 				return 1;
 			} else {
