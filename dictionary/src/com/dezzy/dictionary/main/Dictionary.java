@@ -198,7 +198,7 @@ public final class Dictionary implements Serializable {
 		final List<String> sortedWords = new ArrayList<String>();
 		
 		words.forEach(sortedWords::add);
-		Collections.sort(sortedWords);
+		Collections.sort(sortedWords, String.CASE_INSENSITIVE_ORDER);
 		
 		final StringBuilder sb = new StringBuilder(name + System.lineSeparator());
 		sortedWords.forEach(word -> sb.append(System.lineSeparator() + getDefinitionString(word)));
