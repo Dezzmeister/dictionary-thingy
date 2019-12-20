@@ -12,6 +12,7 @@ public final class Main {
 		final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
 		while (true) {
+			System.out.println();
 			System.out.println("Enter a command: ");
 			final String input = br.readLine();
 			
