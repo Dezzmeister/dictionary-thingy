@@ -9,11 +9,15 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A named dictionary that maps String words and phrases to String definitions.
@@ -53,13 +57,13 @@ public final class Dictionary implements Serializable {
 	/**
 	 * Attempts to add a definition for a given word/phrase. If the definition already exists, does nothing.
 	 * 
-	 * @param word word/phrase to add a definition for (case insensitive)
+	 * @param word word/phrase to add a definition for (case sensitive)
 	 * @param definition definition
 	 * @return true if the definition was added successfully, false if not
 	 */
 	public final boolean weakDefine(final String word, final String definition) {
-		if (!definitions.containsKey(word.toLowerCase())) {
-			definitions.put(word.toLowerCase(), definition);
+		if (!definitions.containsKey(word)) {
+			definitions.put(word, definition);
 			return true;
 		}
 		
@@ -67,16 +71,106 @@ public final class Dictionary implements Serializable {
 	}
 	
 	/**
+	 * Tries to remove an entry from this dictionary, and returns true if the operation was successful.
+	 * 
+	 * @param word word/phrase to remove
+	 * @return true if the word/phrase was removed, false if it didn't exist
+	 */
+	public final boolean remove(final String word) {
+		return definitions.remove(word) != null;
+	}
+	
+	/**
+	 * A single result of a dictionary search.
+	 *
+	 * @author Joe Desmond
+	 */
+	public final class SearchResult {
+		/**
+		 * Word/phrase pointing to the search result
+		 */
+		public final String definitionString;
+		
+		/**
+		 * A metric of the relevancy of this search result
+		 */
+		public final int score;
+		
+		/**
+		 * Creates a search result with the given definition string (search candidate) and score.
+		 * 
+		 * @param _definitonString search candidate containing the search term
+		 * @param _score relevancy of this result
+		 */
+		public SearchResult(final String _definitionString, final int _score) {
+			definitionString = _definitionString;
+			score = _score;
+		}
+	}
+	
+	/**
+	 * {@link SearchResult} sorting metric, compares by relevancy first and alphabetical order second.
+	 *
+	 * @author Joe Desmond
+	 */
+	public static final class AlphabeticalRelevancyComparator implements Comparator<SearchResult> {
+		
+		@Override
+		public int compare(final SearchResult s1, final SearchResult s2) {
+			if (s1.score == s2.score) {
+				return s1.definitionString.compareTo(s2.definitionString);
+			} else if (s1.score > s2.score) {
+				return 1;
+			} else {
+				return -1;
+			}
+		}
+	}
+	
+	/**
+	 * Searches the dictionary for a given search term and returns EVERY result, even completely irrelevant results.
+	 * 
+	 * @param regex regular expression search term
+	 * @return search results
+	 */
+	public final List<SearchResult> searchAll(final String regex) {
+		final Pattern searchPattern = Pattern.compile(regex);
+		
+		return definitions.keySet()
+				.stream()
+				.map(word -> searchDefinitionString(searchPattern, getDefinitionString(word)))
+				.collect(Collectors.toList());
+	}
+	
+	/**
+	 * Returns the search result for a search term and one candidate string.
+	 * 
+	 * @param pattern search pattern (compiled regex)
+	 * @param defString single search candidate (word and definition string)
+	 * @return search result data
+	 */
+	private final SearchResult searchDefinitionString(final Pattern pattern, final String defString) {
+		final Matcher matcher = pattern.matcher(defString);
+		
+		int count = 0;
+		while (matcher.find()) {
+			count++;
+		}
+		
+		return new SearchResult(defString, count);
+	}
+	
+	/**
 	 * Adds a definition or updates an existing definition for a given word/phrase.
 	 * 
-	 * @param word word/phrase to add a definition for (case insensitive)
+	 * @param word word/phrase to add a definition for (case sensitive)
 	 * @param definition definition
 	 * @return true if the definition existed before, false if it's new
 	 */
 	public final boolean strongDefine(final String word, final String definition) {
-		final boolean exists = definitions.containsKey(word.toLowerCase());
+		final boolean exists = definitions.containsKey(word);
 		
-		definitions.put(word.toLowerCase(), definition);
+		definitions.put(word, definition);
 		
 		return !exists;
 	}
@@ -84,11 +178,11 @@ public final class Dictionary implements Serializable {
 	/**
 	 * Gets the definition for a word/phrase.
 	 * 
-	 * @param word word/phrase (case insensitive)
+	 * @param word word/phrase (case sensitive)
 	 * @return definition for the word ({@link Optional#empty} if the word is not defined)
 	 */
 	public final Optional<String> getDefinition(final String word) {
-		final String definition = definitions.get(word.toLowerCase());
+		final String definition = definitions.get(word);
 		
 		return (definition == null) ? Optional.empty() : Optional.of(definition);
 	}
@@ -102,20 +196,31 @@ public final class Dictionary implements Serializable {
 	public final String toString() {
 		final Set<String> words = definitions.keySet();
 		final List<String> sortedWords = new ArrayList<String>();
-		for (String word : words) {
-			sortedWords.add(word);
-		}
+		
+		words.forEach(sortedWords::add);
 		Collections.sort(sortedWords);
 		
 		final StringBuilder sb = new StringBuilder(name + System.lineSeparator());
-		
-		for (String word : sortedWords) {
-			final String definition = definitions.get(word);
-			
-			sb.append(System.lineSeparator() + word + ":\t" + definition);
-		}
+		sortedWords.forEach(word -> sb.append(System.lineSeparator() + getDefinitionString(word)));
 		
 		return sb.toString();
+	}
+	
+	/**
+	 * Returns a readable definition string containing a word and its defintion.
+	 * 
+	 * @param word word/phrase
+	 * @return definition string
+	 * @throws NullPointerException if the definition does not exist
+	 */
+	private final String getDefinitionString(final String word) {
+		final String definition = definitions.get(word);
+		
+		if (definition == null) {
+			throw new NullPointerException("No definition exists for \"" + word + "\"!");
+		}
+		
+		return word + ":\t" + definition;
 	}
 	
 	/**

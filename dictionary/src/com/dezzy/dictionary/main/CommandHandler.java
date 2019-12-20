@@ -3,9 +3,14 @@ package com.dezzy.dictionary.main;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.dezzy.dictionary.main.Dictionary.SearchResult;
 
 /**
  * Handles commands for a dictionary.
@@ -47,7 +52,7 @@ public final class CommandHandler {
 		String arg = "";
 		
 		if (commandString.contains(" ")) {
-			command = commandString.substring(0, commandString.indexOf(" "));
+			command = commandString.substring(0, commandString.indexOf(" ")).toLowerCase();
 			arg = commandString.substring(commandString.indexOf(" ") + 1);
 		}
 		
@@ -57,7 +62,7 @@ public final class CommandHandler {
 	/**
 	 * Receives a command and its argument, executes the command, and returns a status string.
 	 * 
-	 * @param command command name
+	 * @param command lowercase command name
 	 * @param arg command argument
 	 * @return status string
 	 */
@@ -73,12 +78,16 @@ public final class CommandHandler {
 				return newDefinition(false, arg);
 			case "strongdefine":
 				return newDefinition(true, arg);
+			case "remove":
+				return removeDefinition(arg);
 			case "find":
 				return findDefinition(arg);
 			case "print":
 				return printDictionary(arg);
 			case "printto":
 				return saveDefinitionsTo(arg);
+			case "search":
+				return searchAll(arg);
 			case "close":
 				return close();
 			default:
@@ -87,7 +96,63 @@ public final class CommandHandler {
 	}
 	
 	/**
-	 * Saves the entries and definitions in this dictionary to a text file.
+	 * Searches the dictionary for a given regular expression string.
+	 * 
+	 * @param searchRegex search expression
+	 * @return list of results (delimited by newlines), or status string
+	 */
+	private final String searchAll(final String searchRegex) {
+		if (openDictionary == null) {
+			return "ERROR: No dictionary is open!"; 
+		}
+		
+		final List<SearchResult> results = openDictionary.searchAll(searchRegex);
+		Collections.sort(results, new Dictionary.AlphabeticalRelevancyComparator());
+		
+		final List<SearchResult> relevantResults = new ArrayList<SearchResult>();
+		
+		for (int i = results.size() - 1; i >= 0; i--) {
+			final SearchResult result = results.get(i);
+			if (result.score == 0) {
+				break;
+			} else {
+				relevantResults.add(result);
+			}
+		}
+		
+		if (relevantResults.isEmpty()) {
+			return "No results";
+		}
+		
+		final StringBuilder sb = new StringBuilder("Results (" + relevantResults.size() + "):" + System.lineSeparator());
+		for (SearchResult result : relevantResults) {
+			sb.append(System.lineSeparator() + result.definitionString);
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * Attempts to remove a definition from the dictionary.
+	 * 
+	 * @param word word/phrase to remove
+	 * @return status string
+	 */
+	private final String removeDefinition(final String word) {
+		if (openDictionary == null) {
+			return "ERROR: No dictionary is open!"; 
+		}
+		
+		try {
+			openDictionary.remove(word);
+			return "Removed \"" + word + "\" from the dictionary";
+		} catch (NullPointerException e) {
+			return "ERROR: No definition for \"" + word + "\" exists in the dictionary!";
+		}
+	}
+	
+	/**
+	 * Saves the entries and definitions in the dictionary to a text file.
 	 * 
 	 * @param path path of the text file
 	 * @return status string
