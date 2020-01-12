@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ public final class Dictionary implements Serializable {
 	/**
 	 * Definitions in the dictionary
 	 */
-	private final Map<String, String> definitions = new HashMap<String, String>();
+	private final Map<String, Definition> definitions = new HashMap<String, Definition>();
 	
 	/**
 	 * Creates a dictionary with the given name and no definitions. <br>
@@ -55,6 +56,15 @@ public final class Dictionary implements Serializable {
 	}
 	
 	/**
+	 * Returns all definitions stored in the dictionary.
+	 * 
+	 * @return a reference to the HashMap backing this dictionary
+	 */
+	final Map<String, Definition> getDefinitions() {
+		return definitions;
+	}
+	
+	/**
 	 * Attempts to add a definition for a given word/phrase. If the definition already exists, does nothing.
 	 * 
 	 * @param word word/phrase to add a definition for (case sensitive)
@@ -63,11 +73,15 @@ public final class Dictionary implements Serializable {
 	 */
 	public final boolean weakDefine(final String word, final String definition) {
 		if (!definitions.containsKey(word)) {
-			definitions.put(word, definition);
+			definitions.put(word, new Definition(definition, new Date()));
 			return true;
 		}
 		
 		return false;
+	}
+	
+	public final void temp_RAWDEFINE(final String word, final Definition definition) {
+		definitions.put(word, definition);
 	}
 	
 	/**
@@ -170,7 +184,7 @@ public final class Dictionary implements Serializable {
 	public final boolean strongDefine(final String word, final String definition) {
 		final boolean exists = definitions.containsKey(word);
 		
-		definitions.put(word, definition);
+		definitions.put(word, new Definition(definition, new Date()));
 		
 		return !exists;
 	}
@@ -182,9 +196,9 @@ public final class Dictionary implements Serializable {
 	 * @return definition for the word ({@link Optional#empty} if the word is not defined)
 	 */
 	public final Optional<String> getDefinition(final String word) {
-		final String definition = definitions.get(word);
+		final Definition definition = definitions.get(word);
 		
-		return (definition == null) ? Optional.empty() : Optional.of(definition);
+		return (definition == null) ? Optional.empty() : Optional.of(definition.definition());
 	}
 	
 	/**
@@ -194,16 +208,27 @@ public final class Dictionary implements Serializable {
 	 */
 	@Override
 	public final String toString() {
-		final Set<String> words = definitions.keySet();
-		final List<String> sortedWords = new ArrayList<String>();
-		
-		words.forEach(sortedWords::add);
-		Collections.sort(sortedWords, String.CASE_INSENSITIVE_ORDER);
+		final List<String> sortedWords = getSortedWords();
 		
 		final StringBuilder sb = new StringBuilder(name + System.lineSeparator());
 		sortedWords.forEach(word -> sb.append(System.lineSeparator() + getDefinitionString(word)));
 		
 		return sb.toString();
+	}
+	
+	/**
+	 * Returns a list of all defined words in the dictionary, sorted alphabetically (case insensitive).
+	 * 
+	 * @return a list of sorted words
+	 */
+	final List<String> getSortedWords() {
+		final Set<String> words = definitions.keySet();
+		final List<String> sortedWords = new ArrayList<String>();
+		
+		sortedWords.addAll(words);
+		Collections.sort(sortedWords, String.CASE_INSENSITIVE_ORDER);
+		
+		return sortedWords;
 	}
 	
 	/**
@@ -214,13 +239,13 @@ public final class Dictionary implements Serializable {
 	 * @throws NullPointerException if the definition does not exist
 	 */
 	private final String getDefinitionString(final String word) {
-		final String definition = definitions.get(word);
+		final Definition definition = definitions.get(word);
 		
 		if (definition == null) {
 			throw new NullPointerException("No definition exists for \"" + word + "\"!");
 		}
 		
-		return word + ":\t" + definition;
+		return word + ":\t" + definition.definition();
 	}
 	
 	/**
