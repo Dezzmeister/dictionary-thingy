@@ -1,5 +1,6 @@
 package com.dezzy.dictionary.main;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -7,8 +8,13 @@ import java.util.Date;
  *
  * @author Joe Desmond
  */
-public final class Definition {
+public final class Definition implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2041991497658680058L;
+
 	/**
 	 * The actual definition
 	 */
@@ -17,7 +23,7 @@ public final class Definition {
 	/**
 	 * The date that the definition was added to the dictionary
 	 */
-	private final Date entryDate;
+	private Date entryDate;
 	
 	/**
 	 * The number of times the definition was retrieved
@@ -52,6 +58,20 @@ public final class Definition {
 	 */
 	public final Date entryDate() {
 		return entryDate;
+	}
+	
+	/**
+	 * Changes the entry date for this definition, and returns the old entry date. <br>
+	 * This method is package-private; it should only be used through {@link CommandHandler}. <br>
+	 * <b>This should only be used when transcribing old definitions!</b>
+	 * 
+	 * @param newDate new entry date
+	 * @return old entry date
+	 */
+	final Date changeEntryDate(final Date newDate) {
+		final Date oldDate = entryDate;
+		entryDate = newDate;
+		return oldDate;
 	}
 	
 	/**

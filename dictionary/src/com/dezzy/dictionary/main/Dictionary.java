@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,9 +70,9 @@ public final class Dictionary implements Serializable {
 	 * @param definition definition
 	 * @return true if the definition was added successfully, false if not
 	 */
-	public final boolean weakDefine(final String word, final String definition) {
+	public final boolean weakDefine(final String word, final Definition definition) {
 		if (!definitions.containsKey(word)) {
-			definitions.put(word, new Definition(definition, new Date()));
+			definitions.put(word, definition);
 			return true;
 		}
 		
@@ -181,10 +180,10 @@ public final class Dictionary implements Serializable {
 	 * @param definition definition
 	 * @return true if the definition existed before, false if it's new
 	 */
-	public final boolean strongDefine(final String word, final String definition) {
+	public final boolean strongDefine(final String word, final Definition definition) {
 		final boolean exists = definitions.containsKey(word);
 		
-		definitions.put(word, new Definition(definition, new Date()));
+		definitions.put(word, definition);
 		
 		return !exists;
 	}
@@ -195,10 +194,10 @@ public final class Dictionary implements Serializable {
 	 * @param word word/phrase (case sensitive)
 	 * @return definition for the word ({@link Optional#empty} if the word is not defined)
 	 */
-	public final Optional<String> getDefinition(final String word) {
+	public final Optional<Definition> getDefinition(final String word) {
 		final Definition definition = definitions.get(word);
 		
-		return (definition == null) ? Optional.empty() : Optional.of(definition.definition());
+		return (definition == null) ? Optional.empty() : Optional.of(definition);
 	}
 	
 	/**

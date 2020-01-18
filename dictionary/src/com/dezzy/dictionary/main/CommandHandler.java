@@ -3,8 +3,11 @@ package com.dezzy.dictionary.main;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -18,6 +21,11 @@ import com.dezzy.dictionary.main.Dictionary.SearchResult;
  * @author Joe Desmond
  */
 public final class CommandHandler {
+	
+	/**
+	 * Expected format for a date argument
+	 */
+	private static final SimpleDateFormat DATE_ARG_FORMAT = new SimpleDateFormat("MM:dd:yyyy:hh:mm");
 	
 	/**
 	 * The current dictionary, or null if there is no open dictionary
@@ -75,9 +83,11 @@ public final class CommandHandler {
 			case "save":
 				return save(arg);
 			case "weakdefine":
-				return newDefinition(false, arg);
+				return newDefinition(false, arg, new Date());
 			case "strongdefine":
-				return newDefinition(true, arg);
+				return newDefinition(true, arg, new Date());
+			case "changedate":
+				return changeDate(arg);
 			case "remove":
 				return removeDefinition(arg);
 			case "find":
@@ -93,6 +103,40 @@ public final class CommandHandler {
 			default:
 				return "ERROR: Invalid command!";
 		}
+	}
+	
+	/**
+	 * Changes the entry date of an existing definition.
+	 * 
+	 * @param arg argument string, formatted as such: <code>MM:dd:yyyy:hh:mm word</code>, where "word" is the entry whose entry date to change
+	 * @return status string
+	 */
+	private final String changeDate(final String arg) {
+		if (openDictionary == null) {
+			return "ERROR: No dictionary is open!"; 
+		}
+		
+		if (!arg.contains(" ")) {
+			return "ERROR: Invalid date or definition argument!";
+		}
+		final String dateString = arg.substring(0, arg.indexOf(" "));
+		final String word = arg.substring(arg.indexOf(" ") + 1);
+		Date date;
+		
+		try {
+			date = DATE_ARG_FORMAT.parse(dateString);
+		} catch (ParseException e) {
+			return "ERROR: Date string is formatted incorrectly!";
+		}
+		
+		final Optional<Definition> oldDefinition = openDictionary.getDefinition(word);
+		if (oldDefinition.isEmpty()) {
+			return "ERROR: No definition for \"" + word + "\" exists in the dictionary!";
+		}
+		
+		final Date oldDate = oldDefinition.get().changeEntryDate(date);
+		
+		return "Changed entry date for \"" + word + "\" from " + DATE_ARG_FORMAT.format(oldDate) + " to " + dateString;
 	}
 	
 	/**
@@ -227,9 +271,9 @@ public final class CommandHandler {
 			return "ERROR: No dictionary is open!";
 		}
 		
-		final Optional<String> definition = openDictionary.getDefinition(word);
+		final Optional<Definition> definition = openDictionary.getDefinition(word);
 		if (definition.isPresent()) {
-			return word + ":\t" + definition.get();
+			return word + ":\t" + definition.get().definition();
 		} else {
 			return "No definition exists for \"" + word + "\"";
 		}
@@ -240,13 +284,15 @@ public final class CommandHandler {
 	 * 
 	 * @param strong true if the definition should be added regardless of whether or not it already exists
 	 * @param defString definition string of the form "<code>"word" definition</code>"
+	 * @param date date of the definition
 	 * @return status string
 	 */
-	private final String newDefinition(final boolean strong, final String defString) {
+	private final String newDefinition(final boolean strong, final String defString, final Date date) {
 		if (openDictionary == null) {
 			return "ERROR: No open dictionary!";
 		}
 		
+		//Regular expression that matches with the word being defined, which should be surrounded by quotes. Any matches after the first are ignored
 		final String regex = "(\")[^\"]+(\"\\s)";
 		final Pattern pattern = Pattern.compile(regex);
 		final Matcher matcher = pattern.matcher(defString);
@@ -263,10 +309,10 @@ public final class CommandHandler {
 		final String definition = defString.substring(defString.indexOf(rawWord) + rawWord.length()).trim();
 		
 		if (!strong) {
-			final boolean defSuccess = openDictionary.weakDefine(word, definition);
+			final boolean defSuccess = openDictionary.weakDefine(word, new Definition(definition, date));
 			return defSuccess ? "\"" + word + "\" was defined successfully." : "A definition already exists for \"" + word + "\"!"; 
 		} else {
-			final boolean defExisted = openDictionary.strongDefine(word, definition);
+			final boolean defExisted = openDictionary.strongDefine(word, new Definition(definition, date));
 			return defExisted ? "Definition for \"" + word + "\" was updated." : "\"" + word + "\" was defined successfully.";
 		}
 	}
