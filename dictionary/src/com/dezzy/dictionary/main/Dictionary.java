@@ -64,6 +64,18 @@ public final class Dictionary implements Serializable {
 	}
 	
 	/**
+	 * Returns all definitions stored in the dictionary. <br>
+	 * Copies references to each entry to a new map, and returns the new map.
+	 * 
+	 * @return a shallow copy of the internal definition map
+	 */
+	public final Map<String, Definition> shallowCopyDefinitions() {
+		final Map<String, Definition> copy = new HashMap<String, Definition>();
+		definitions.forEach(copy::put);
+		return copy;
+	}
+	
+	/**
 	 * Attempts to add a definition for a given word/phrase. If the definition already exists, does nothing.
 	 * 
 	 * @param word word/phrase to add a definition for (case sensitive)
@@ -226,6 +238,61 @@ public final class Dictionary implements Serializable {
 		
 		sortedWords.addAll(words);
 		Collections.sort(sortedWords, String.CASE_INSENSITIVE_ORDER);
+		
+		return sortedWords;
+	}
+	
+	/**
+	 * Sorts words/phrases by the dates that they were entered into a dictionary.
+	 * 
+	 * @author Joe Desmond
+	 */
+	private static final class DateComparator implements Comparator<String> {
+		
+		/**
+		 * Definition map, provided so that definitions can be looked up in {@link #compare(String, String)}
+		 */
+		private final Map<String, Definition> definitions;
+		
+		/**
+		 * Creates a DateComparator with knowledge of the given definitions
+		 * 
+		 * @param _definitions definitions
+		 */
+		private DateComparator(final Map<String, Definition> _definitions) {
+			definitions = _definitions;
+		}		
+		
+		/**
+		 * Compares two entries in the dictionary by looking them up and comparing their dates. This method does not perform
+		 * checks to ensure that definitions actually exist; definitions are expected to exist in {@link #definitions}.
+		 * 
+		 * @param o1 first word
+		 * @param o2 second word
+		 * @return negative int, positive int, or zero
+		 * @see Comparator#compare(Object, Object)
+		 */
+		@Override
+		public final int compare(final String o1, final String o2) {
+			final Definition def1 = definitions.get(o1);
+			final Definition def2 = definitions.get(o2);
+			
+			return def1.entryDate().compareTo(def2.entryDate());
+		}
+		
+	}
+	
+	/**
+	 * Get all the words in this dictionary, sorted by entry date.
+	 * 
+	 * @return a list of words/phrases
+	 */
+	public final List<String> getEntryDateSortedWords() {
+		final Set<String> words = definitions.keySet();
+		final List<String> sortedWords = new ArrayList<String>();
+		
+		sortedWords.addAll(words);
+		Collections.sort(sortedWords, new DateComparator(definitions));
 		
 		return sortedWords;
 	}
