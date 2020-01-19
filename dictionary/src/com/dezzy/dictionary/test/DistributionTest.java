@@ -5,9 +5,9 @@ import com.dezzy.dictionary.stats.Distribution;
 public final class DistributionTest {
 	
 	public static final void main(final String ... args) {
-		final Distribution oddSet = new Distribution(1, 2, 5, 6, 7, 9, 12, 15, 18, 19, 27);
-		final Distribution evenSet = new Distribution(21, 20, 16, 15, 11, 9, 8, 7, 5, 3);
-		final Distribution kurtosisTest = new Distribution(2, 2, 2, 3, 3, 3, 4, 4, 4);
+		final Distribution oddSet = new Distribution("Odd Test", 1, 2, 5, 6, 7, 9, 12, 15, 18, 19, 27);
+		final Distribution evenSet = new Distribution("Even Test", 21, 20, 16, 15, 11, 9, 8, 7, 5, 3);
+		final Distribution kurtosisTest = new Distribution("Kurtosis Test", 2, 2, 2, 3, 3, 3, 4, 4, 4);
 		
 		System.out.println("Odd Mean:\t " + oddSet.mean);
 		System.out.println("Odd Stdev:\t " + oddSet.stdev);

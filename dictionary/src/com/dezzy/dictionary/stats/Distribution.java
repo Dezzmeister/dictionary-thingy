@@ -1,5 +1,6 @@
 package com.dezzy.dictionary.stats;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 /**
@@ -10,9 +11,19 @@ import java.util.Arrays;
 public final class Distribution {
 	
 	/**
+	 * The name of the distribution
+	 */
+	public final String name;
+	
+	/**
+	 * Extra info about the distribution
+	 */
+	public final String auxInfo;
+	
+	/**
 	 * The data points, sorted in ascending order
 	 */
-	private final float[] data;
+	public final float[] data;
 	
 	/**
 	 * Population mean
@@ -71,11 +82,16 @@ public final class Distribution {
 	
 	/**
 	 * Constructs a distribution from the given data points and calculates various statistics. <br>
-	 * <b>This constructor sorts the given array in ascending order</br>.
+	 * <b>This constructor sorts the given array in ascending order</b>.
 	 * 
+	 * @param _name name of the distribution
+	 * @param _auxInfo extra info about the distribution (for example, <code>"Time is measured in minutes"</code>).
+	 * 				   This exists primarily to add more info in {@link #toString()}
 	 * @param _data data points
 	 */
-	public Distribution(float ... _data) {
+	public Distribution(final String _name, final String _auxInfo, float ... _data) {
+		name = _name;
+		auxInfo = _auxInfo;
 		data = _data;
 		Arrays.sort(data);
 		
@@ -96,6 +112,19 @@ public final class Distribution {
 		max = data[data.length - 1];
 		skewness = skewness(data, mean, stdev);
 		kurtosis = kurtosis(data, mean, stdev);
+	}
+	
+	/**
+	 * Constructs a distribution from the given data points and calculates various statistics. <br>
+	 * <b>This constructor sorts the given array in ascending order</b><br>
+	 * Functions exactly like {@link Distribution#Distribution(String, String, float...) this constructor},
+	 * except the empty string is passed in as <code>auxInfo</code>.
+	 * 
+	 * @param _name name of the distribution
+	 * @param _data data points
+	 */
+	public Distribution(final String _name, float ... _data) {
+		this(_name, "", _data);
 	}
 	
 	/**
@@ -192,5 +221,40 @@ public final class Distribution {
 		}
 		
 		return sum / data.length;
+	}
+	
+	/**
+	 * Returns a multi-line String with the name and auxiliary info of this distribution as a header, and statistics on their own lines. <br>
+	 * <b>NOTE: Uses reflection to get names and values for each statistic!</b>
+	 * 
+	 * @return a list of this distribution's statistics
+	 */
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder(name);
+		
+		if (!auxInfo.equals("")) {
+			sb.append(System.lineSeparator());
+			sb.append(auxInfo);
+		}
+		
+		final Field[] fields = getClass().getDeclaredFields();
+		
+		for (final Field field : fields) {
+			if (field.getType() == float.class) {
+				sb.append(System.lineSeparator());
+				sb.append("\t");
+				sb.append(field.getName());
+				sb.append(":\t\t");
+				try {
+					sb.append(field.get(this));
+				} catch (Exception e) {
+					e.printStackTrace();
+					sb.append("ERROR");
+				}
+			}
+		}
+		
+		return sb.toString();
 	}
 }

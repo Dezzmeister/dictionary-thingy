@@ -64,15 +64,12 @@ public final class Dictionary implements Serializable {
 	}
 	
 	/**
-	 * Returns all definitions stored in the dictionary. <br>
-	 * Copies references to each entry to a new map, and returns the new map.
+	 * Returns the number of definitions in the dictionary.
 	 * 
-	 * @return a shallow copy of the internal definition map
+	 * @return size of the dictionary
 	 */
-	public final Map<String, Definition> shallowCopyDefinitions() {
-		final Map<String, Definition> copy = new HashMap<String, Definition>();
-		definitions.forEach(copy::put);
-		return copy;
+	public final int size() {
+		return definitions.size();
 	}
 	
 	/**
@@ -112,7 +109,7 @@ public final class Dictionary implements Serializable {
 	 */
 	public final class SearchResult {
 		/**
-		 * Word/phrase pointing to the search result
+		 * Definition string for the word/phrase (includes the word and its definition)
 		 */
 		public final String definitionString;
 		
@@ -140,10 +137,19 @@ public final class Dictionary implements Serializable {
 	 */
 	public static final class AlphabeticalRelevancyComparator implements Comparator<SearchResult> {
 		
+		/**
+		 * Compares the definition strings and relevancy scores of two search results.
+		 * If they have equal scores, returns a comparison of their lowercase definition strings;
+		 * otherwise, returns a comparison of their scores.
+		 * 
+		 * @param s1 first search result
+		 * @param s2 second search result
+		 * @return negative int, positive int, or zero
+		 */
 		@Override
 		public int compare(final SearchResult s1, final SearchResult s2) {
 			if (s1.score == s2.score) {
-				return s2.definitionString.compareTo(s1.definitionString);
+				return s2.definitionString.toLowerCase().compareTo(s1.definitionString.toLowerCase());
 			} else if (s1.score > s2.score) {
 				return 1;
 			} else {

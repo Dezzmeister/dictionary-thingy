@@ -14,9 +14,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.dezzy.dictionary.main.Dictionary.SearchResult;
+import com.dezzy.dictionary.stats.Statistics;
 
 /**
- * Handles commands for a dictionary.
+ * Handles commands for a dictionary. Accepts raw string commands, parses them into operation/argument pairs, then dispatches on the operation
+ * to a function that parses the arguments and does the appropriate operation. Status strings are passed around; exceptions are caught and a status string
+ * beginning with "ERROR" is returned instead.
  *
  * @author Joe Desmond
  */
@@ -25,7 +28,12 @@ public final class CommandHandler {
 	/**
 	 * Expected format for a date argument
 	 */
-	private static final SimpleDateFormat DATE_ARG_FORMAT = new SimpleDateFormat("MM:dd:yyyy:hh:mm");
+	private static final SimpleDateFormat DATE_ARG_FORMAT = new SimpleDateFormat("MM:dd:yyyy:HH:mm");
+	
+	/**
+	 * Date format used when printing definitions
+	 */
+	private static final SimpleDateFormat DATE_OUTPUT_FORMAT = new SimpleDateFormat("MM/dd/YYYY hh:mm:ss a");
 	
 	/**
 	 * The current dictionary, or null if there is no open dictionary
@@ -43,7 +51,19 @@ public final class CommandHandler {
 	private String dictionaryText;
 	
 	/**
-	 * Creates a CommandHandler.
+	 * Most recent statistics, or null if none have been generated
+	 */
+	private Statistics statistics;
+	
+	/**
+	 * A flag that can be set by the user if they want to include custom date arguments in definitions. 
+	 * If this is disabled, the current date is used.
+	 */
+	private boolean datesEnabled;
+	
+	/**
+	 * Creates a CommandHandler. {@link #receive(String)} or {@link #receive(String, String)} must be called
+	 * in order for this CommandHandler to function.
 	 */
 	public CommandHandler() {
 		
@@ -83,9 +103,17 @@ public final class CommandHandler {
 			case "save":
 				return save(arg);
 			case "weakdefine":
-				return newDefinition(false, arg, new Date());
+				return newDefinition(false, arg);
 			case "strongdefine":
-				return newDefinition(true, arg, new Date());
+				return newDefinition(true, arg);
+			case "enabledates":
+				return setDatesEnabled(true);
+			case "disabledates":
+				return setDatesEnabled(false);
+			case "printstats":
+				return printStatistics(arg);
+			case "statsdump":
+				return saveStatisticsTo(arg);
 			case "changedate":
 				return changeDate(arg);
 			case "remove":
@@ -103,6 +131,68 @@ public final class CommandHandler {
 			default:
 				return "ERROR: Invalid command!";
 		}
+	}
+	
+	/**
+	 * Saves the current statistics to a text file, generates new statistics if none have been generated yet.
+	 * 
+	 * @param path path of the text file
+	 * @return status string
+	 */
+	private final String saveStatisticsTo(final String path) {
+		final String definitions = printStatistics("new");
+		
+		if (definitions.startsWith("ERROR")) {
+			return definitions;
+		}
+		
+		try (PrintWriter pw = new PrintWriter(new FileWriter(new File(path)))) {
+			pw.print(definitions);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "ERROR: Problem occurred while trying to write to text file!";
+		}
+		
+		return "Saved statistics printout to \"" + path + "\"";
+	}
+	
+	/**
+	 * Prints statistics for the dictionary.
+	 * 
+	 * @param versionArg either "new" or "current" to specify new statistics or previously generated statistics <br>
+	 * 					 using "current" with no generated statistics will generate a new statistics
+	 * @return String containing the statistics of the dictionary, or a status string
+	 */
+	private final String printStatistics(final String versionArg) {
+		if (openDictionary == null) {
+			return "ERROR: No dictionary is open!"; 
+		}
+		
+		if (versionArg.equalsIgnoreCase("new")) {
+			statistics = new Statistics(openDictionary);
+			
+			return statistics.toString();
+		} else if (versionArg.equalsIgnoreCase("current")) {
+			if (statistics == null) {
+				statistics = new Statistics(openDictionary);
+			}
+			
+			return statistics.toString();
+		} else {
+			return "ERROR: Invalid version argument!";
+		}
+	}
+	
+	/**
+	 * Sets the flag that determines if date arguments will be accepted in strongdefine/weakdefine invocations.
+	 * If date arguments are disabled, the current date will be used when entering a new definition.
+	 * 
+	 * @param enabled true if date arguments should be enabled
+	 * @return status string
+	 */
+	private final String setDatesEnabled(final boolean enabled) {
+		datesEnabled = enabled;
+		return enabled ? "Enabled date arguments" : "Disabled date arguments";
 	}
 	
 	/**
@@ -273,7 +363,9 @@ public final class CommandHandler {
 		
 		final Optional<Definition> definition = openDictionary.getDefinition(word);
 		if (definition.isPresent()) {
-			return word + ":\t" + definition.get().definition();
+			final String dateString = DATE_OUTPUT_FORMAT.format(definition.get().entryDate());
+			return word + ":\t" + definition.get().definition() + System.lineSeparator() + System.lineSeparator()
+				   + dateString;
 		} else {
 			return "No definition exists for \"" + word + "\"";
 		}
@@ -283,26 +375,42 @@ public final class CommandHandler {
 	 * Adds a definition to the dictionary.
 	 * 
 	 * @param strong true if the definition should be added regardless of whether or not it already exists
-	 * @param defString definition string of the form "<code>"word" definition</code>"
-	 * @param date date of the definition
+	 * @param defString definition string of the form "<code>"word" "datestring" definition</code>"
 	 * @return status string
 	 */
-	private final String newDefinition(final boolean strong, final String defString, final Date date) {
+	private final String newDefinition(final boolean strong, final String defString) {
 		if (openDictionary == null) {
 			return "ERROR: No open dictionary!";
 		}
 		
-		//Regular expression that matches with the word being defined, which should be surrounded by quotes. Any matches after the first are ignored
+		//Regular expression that matches with the word being defined, which should be surrounded by quotes.
+		//Any matches after the first are ignored, unless date arguments are enabled: in which case a date string should be provided, also in quotes and after the word.
 		final String regex = "(\")[^\"]+(\"\\s)";
 		final Pattern pattern = Pattern.compile(regex);
 		final Matcher matcher = pattern.matcher(defString);
 		
 		String rawWord;
+		String dateString;
 		
 		if (matcher.find()) {
 			rawWord = matcher.group(0);
 		} else {
 			return "ERROR: Malformed definition argument!";
+		}
+		
+		final Date date;
+		
+		if (!datesEnabled) {
+			date = new Date();
+		} else if (matcher.find()) {
+			dateString = matcher.group(0).replace('"', ' ').trim();
+			try {
+				date = DATE_ARG_FORMAT.parse(dateString);
+			} catch (Exception e) {
+				return "ERROR: Malformed date argument!";
+			}
+		} else {
+			return "ERROR: Missing date argument!";
 		}
 		
 		final String word = rawWord.replace('"', ' ').trim();

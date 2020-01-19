@@ -1,0 +1,17 @@
+============ STATISTICS ============
+As of 01/19/2020 04:18:32 PM:
+There are 41 definitions in Ye Olde Royale Kingdom Dictionary
+
+====== Time Differences Distribution ======
+Distribution of entry times between consecutive definitions. Time is measured in minutes
+	mean:		6145.3
+	variance:		2.3103624E8
+	stdev:		15199.876
+	median:		1138.0
+	quartile1:		5.0
+	quartile3:		5021.5
+	IQR:		5016.5
+	min:		0.0
+	max:		93740.0
+	skewness:		5.1930366
+	kurtosis:		29.816528

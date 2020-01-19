@@ -106,12 +106,20 @@ public class AlbaniaUpdate {
 		dict.temp_RAWDEFINE("Mr. Smarty", 
 				new Definition("One of the first of Joe's official titles"
 						+ " - Recognized by the Kingdom", sdf.parse("08:01:2019:22:38")));
+		dict.temp_RAWDEFINE("The Mathematician Decree", 
+				new Definition("\"I hereby decree that the King Albanian Rock (a.k.a. Joseph Desmond) is a rascally mathematician.\""
+						+ " - Drafted and Signed by The Lawyer of the Land", sdf.parse("01:18:2020:21:00")));
+		dict.temp_RAWDEFINE("strave", 
+				new Definition("strong and brave", sdf.parse("01:18:2020:21:03")));
+		dict.temp_RAWDEFINE("revenge slay", 
+				new Definition("when you slay something as revenge because it previously slayed you", sdf.parse("01:19:2020:15:30")));
 		
 		dict.save("albania/kingdom-dictionary.dict");
 		final CommandHandler ch = new CommandHandler();
 		System.out.println(ch.receive("open albania/kingdom-dictionary.dict"));
 		System.out.println(ch.receive("print new"));
 		System.out.println(ch.receive("printto albania/kingdom-dictionary.txt"));
+		System.out.println(ch.receive("statsdump albania/stats.txt"));
 		System.out.println(ch.receive("close"));
 	}
 	
