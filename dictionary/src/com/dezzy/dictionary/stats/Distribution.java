@@ -60,7 +60,17 @@ public final class Distribution {
 	public final float max;
 	
 	/**
-	 * Constructs a distribution from the given data points. <br>
+	 * Pearson's moment coefficient of skewness, accounting for sample size
+	 */
+	public final float skewness;
+	
+	/**
+	 * The kurtosis
+	 */
+	public final float kurtosis;
+	
+	/**
+	 * Constructs a distribution from the given data points and calculates various statistics. <br>
 	 * <b>This constructor sorts the given array in ascending order</br>.
 	 * 
 	 * @param _data data points
@@ -84,6 +94,49 @@ public final class Distribution {
 		IQR = quartile3 - quartile1;
 		min = data[0];
 		max = data[data.length - 1];
+		skewness = skewness(data, mean, stdev);
+		kurtosis = kurtosis(data, mean, stdev);
+	}
+	
+	/**
+	 * Calculates the Pearson's moment coefficient of skewness.
+	 * 
+	 * @param data dataset
+	 * @param mean population mean
+	 * @param stdev population standard deviation
+	 * @return skewness
+	 */
+	private final float skewness(final float[] data, final float mean, final float stdev) {
+		final float n = data.length;
+		final float constant = (n / ((n - 1) * (n - 2) * (float) Math.pow(stdev, 3)));
+		float sum = 0;
+		
+		for (int i = 0; i < data.length; i++) {
+			sum += Math.pow(data[i] - mean, 3);
+		}
+		
+		return constant * sum;
+	}
+	
+	/**
+	 * Calculates the kurtosis.
+	 * 
+	 * @param data dataset
+	 * @param mean population mean
+	 * @param stdev population standard deviation
+	 * @return kurtosis
+	 */
+	private final float kurtosis(final float[] data, final float mean, final float stdev) {
+		final float n = data.length;
+		final float coeff = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3) * (float) Math.pow(stdev, 4));
+		final float term2 = (3 * (n - 1) * (n - 1)) / ((n - 2) * (n - 3));
+		float sum = 0;
+		
+		for (int i = 0; i < data.length; i++) {
+			sum += Math.pow(data[i] - mean, 4);
+		}
+		
+		return (coeff * sum) - term2;
 	}
 	
 	/**
