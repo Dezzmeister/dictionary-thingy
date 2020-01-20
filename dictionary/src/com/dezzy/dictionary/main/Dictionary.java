@@ -203,7 +203,7 @@ public final class Dictionary implements Serializable {
 		
 		definitions.put(word, definition);
 		
-		return !exists;
+		return exists;
 	}
 	
 	/**
