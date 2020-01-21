@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.dezzy.dictionary.main.Dictionary.SearchResult;
+import com.dezzy.dictionary.stats.Histogram;
 import com.dezzy.dictionary.stats.Statistics;
 
 /**
@@ -134,26 +135,36 @@ public final class CommandHandler {
 	}
 	
 	/**
-	 * Saves the current statistics to a text file, generates new statistics if none have been generated yet.
+	 * Saves the current statistics to a directory. Creates several files in the specified directory 
+	 * including histograms and a printout of dictionary statistics.
 	 * 
-	 * @param path path of the text file
+	 * @param path path of a directory
 	 * @return status string
 	 */
-	private final String saveStatisticsTo(final String path) {
-		final String definitions = printStatistics("new");
+	private final String saveStatisticsTo(final String directory) {
+		final String stats = printStatistics("new");
 		
-		if (definitions.startsWith("ERROR")) {
-			return definitions;
+		if (stats.startsWith("ERROR")) {
+			return stats;
 		}
 		
-		try (PrintWriter pw = new PrintWriter(new FileWriter(new File(path)))) {
-			pw.print(definitions);
+		final Histogram rawTimeDifferencesHist = new Histogram(statistics.timeDifferences);
+		final Histogram timeDifferencesNoOutliersHist = new Histogram(statistics.timeDifferences.copyNoOutliers());
+		try {
+			rawTimeDifferencesHist.saveTo(directory + File.separator + "raw-time-differences.png", "png");
+			timeDifferencesNoOutliersHist.saveTo(directory + File.separator + "time-differences-no-outliers.png", "png");
+		} catch (Exception e) {
+			return "ERROR: Problem saving time differences histograms!";
+		}
+		
+		try (PrintWriter pw = new PrintWriter(new FileWriter(new File(directory + File.separator + "stats.txt")))) {
+			pw.print(stats);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "ERROR: Problem occurred while trying to write to text file!";
 		}
 		
-		return "Saved statistics printout to \"" + path + "\"";
+		return "Saved statistics to \"" + directory + "\" folder";
 	}
 	
 	/**

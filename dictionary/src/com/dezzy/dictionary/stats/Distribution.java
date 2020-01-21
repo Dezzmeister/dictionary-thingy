@@ -76,6 +76,26 @@ public final class Distribution {
 	public final float max;
 	
 	/**
+	 * The acceptable minimum value past which points are considered outliers, calculated with the 1.5 IQR rule
+	 */
+	public final float outlierMin;
+	
+	/**
+	 * The acceptable maximum value past which points are considered outliers, calculated with the 1.5 IQR rule
+	 */
+	public final float outlierMax;
+	
+	/**
+	 * Data points that are not outliers
+	 */
+	public final float[] dataNoOutliers;
+	
+	/**
+	 * Number of data points that are not outliers
+	 */
+	public final float sizeNoOutliers;
+	
+	/**
 	 * The range of this data
 	 */
 	public final float range;
@@ -122,9 +142,23 @@ public final class Distribution {
 		min = data[0];
 		max = data[data.length - 1];
 		range = max - min;
+		outlierMin = quartile1 - (1.5f * IQR);
+		outlierMax = quartile3 + (1.5f * IQR);
+		dataNoOutliers = trimOutliers(data, outlierMin, outlierMax);
+		sizeNoOutliers = dataNoOutliers.length;
 		
 		skewness = skewness(data, mean, stdev);
 		kurtosis = kurtosis(data, mean, stdev);
+	}
+	
+	/**
+	 * Returns a copy of this distribution, with no outliers. {@link #data} in the new Distribution and
+	 * {@link #dataNoOutliers} in this distribution will point to the same array.
+	 * 
+	 * @return a version of this distribution with no outliers
+	 */
+	public final Distribution copyNoOutliers() {
+		return new Distribution(name, auxInfo, dataNoOutliers);
 	}
 	
 	/**
@@ -138,6 +172,32 @@ public final class Distribution {
 	 */
 	public Distribution(final String _name, float ... _data) {
 		this(_name, "", _data);
+	}
+	
+	/**
+	 * Trims a dataset by removing any outliers. The new dataset is still sorted in ascending order, and the old dataset is unchanged.
+	 * 
+	 * @param data dataset to trim (the actual array is unchanged)
+	 * @param outlierMin minimum non-outlier value
+	 * @param outlierMax maximum non-outlier value
+	 * @return a version of <code>data</code> with no outliers
+	 */
+	private static final float[] trimOutliers(final float[] data, final float outlierMin, final float outlierMax) {
+		int minIndex = 0;
+		int maxIndex = data.length - 1;
+		
+		while (data[minIndex] < outlierMin) {
+			minIndex++;
+		}
+		
+		while (data[maxIndex] > outlierMax) {
+			maxIndex--;
+		}
+		
+		final float[] newData = new float[maxIndex - minIndex + 1];
+		System.arraycopy(data, minIndex, newData, 0, newData.length);
+		
+		return newData;
 	}
 	
 	/**
