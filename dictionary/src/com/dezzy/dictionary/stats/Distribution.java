@@ -26,6 +26,11 @@ public final class Distribution {
 	public final float[] data;
 	
 	/**
+	 * Number of data points
+	 */
+	public final float size;
+	
+	/**
 	 * Population mean
 	 */
 	public final float mean;
@@ -71,6 +76,11 @@ public final class Distribution {
 	public final float max;
 	
 	/**
+	 * The range of this data
+	 */
+	public final float range;
+	
+	/**
 	 * Pearson's moment coefficient of skewness, accounting for sample size
 	 */
 	public final float skewness;
@@ -95,6 +105,7 @@ public final class Distribution {
 		data = _data;
 		Arrays.sort(data);
 		
+		size = data.length;
 		mean = mean(data);
 		variance = variance(data, mean);
 		stdev = (float) Math.sqrt(variance);
@@ -110,6 +121,8 @@ public final class Distribution {
 		IQR = quartile3 - quartile1;
 		min = data[0];
 		max = data[data.length - 1];
+		range = max - min;
+		
 		skewness = skewness(data, mean, stdev);
 		kurtosis = kurtosis(data, mean, stdev);
 	}
@@ -135,7 +148,7 @@ public final class Distribution {
 	 * @param stdev population standard deviation
 	 * @return skewness
 	 */
-	private final float skewness(final float[] data, final float mean, final float stdev) {
+	private static final float skewness(final float[] data, final float mean, final float stdev) {
 		final float n = data.length;
 		final float constant = (n / ((n - 1) * (n - 2) * (float) Math.pow(stdev, 3)));
 		float sum = 0;
@@ -155,7 +168,7 @@ public final class Distribution {
 	 * @param stdev population standard deviation
 	 * @return kurtosis
 	 */
-	private final float kurtosis(final float[] data, final float mean, final float stdev) {
+	private static final float kurtosis(final float[] data, final float mean, final float stdev) {
 		final float n = data.length;
 		final float coeff = (n * (n + 1)) / ((n - 1) * (n - 2) * (n - 3) * (float) Math.pow(stdev, 4));
 		final float term2 = (3 * (n - 1) * (n - 1)) / ((n - 2) * (n - 3));
@@ -176,7 +189,7 @@ public final class Distribution {
 	 * @param endIndex end index (exclusive)
 	 * @return median within <code>(endIndex - startIndex)</code>
 	 */
-	private final float medianOf(final float[] data, final int startIndex, final int endIndex) {
+	private static final float medianOf(final float[] data, final int startIndex, final int endIndex) {
 		final int range = endIndex - startIndex;
 		
 		if (range % 2 == 1) {
@@ -196,7 +209,7 @@ public final class Distribution {
 	 * @param mean mean of the dataset
 	 * @return the variance
 	 */
-	private final float variance(final float[] data, final float mean) {
+	private static final float variance(final float[] data, final float mean) {
 		//Mean squared error of the dataset
 		float mse = 0;
 		
@@ -213,7 +226,7 @@ public final class Distribution {
 	 * @param data data points
 	 * @return the average
 	 */
-	private final float mean(final float[] data) {
+	private static final float mean(final float[] data) {
 		float sum = data[0];
 		
 		for (int i = 1; i < data.length; i++) {

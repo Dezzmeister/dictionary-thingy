@@ -390,6 +390,7 @@ public final class CommandHandler {
 		final Matcher matcher = pattern.matcher(defString);
 		
 		String rawWord;
+		String rawDateString = "";
 		String dateString;
 		
 		if (matcher.find()) {
@@ -403,7 +404,8 @@ public final class CommandHandler {
 		if (!datesEnabled) {
 			date = new Date();
 		} else if (matcher.find()) {
-			dateString = matcher.group(0).replace('"', ' ').trim();
+			rawDateString = matcher.group(0);
+			dateString = rawDateString.replace('"', ' ').trim();
 			try {
 				date = DATE_ARG_FORMAT.parse(dateString);
 			} catch (Exception e) {
@@ -414,7 +416,13 @@ public final class CommandHandler {
 		}
 		
 		final String word = rawWord.replace('"', ' ').trim();
-		final String definition = defString.substring(defString.indexOf(rawWord) + rawWord.length()).trim();
+		final String definition;
+		
+		if (!datesEnabled) {
+			definition = defString.substring(defString.indexOf(rawWord) + rawWord.length()).trim();
+		} else {
+			definition = defString.substring(defString.indexOf(rawDateString) + rawDateString.length()).trim();
+		}
 		
 		if (!strong) {
 			final boolean defSuccess = openDictionary.weakDefine(word, new Definition(definition, date));
