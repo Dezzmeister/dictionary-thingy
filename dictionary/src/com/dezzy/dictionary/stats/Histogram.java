@@ -2,7 +2,6 @@ package com.dezzy.dictionary.stats;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -20,11 +19,6 @@ public final class Histogram {
 	 * Pixel width of one bar in the image
 	 */
 	private static final int BIN_WIDTH_PIXELS = 50;
-	
-	/**
-	 * Pixel height of the margins below and to the left of the histogram in the image
-	 */
-	private static final int MARGIN_PIXELS = 50;
 	
 	/**
 	 * The distribution represented by this histogram
@@ -116,7 +110,13 @@ public final class Histogram {
 		return bins;
 	}
 	
-	//TODO: Finish this
+	/**
+	 * Draws a histogram to a BufferedImage, given the bins and bin width.
+	 * 
+	 * @param bins bins
+	 * @param binWidth range of one bin
+	 * @return an image of the histogram
+	 */
 	private static final BufferedImage draw(final int[] bins, final float binWidth) {
 		final int width = BIN_WIDTH_PIXELS * bins.length;
 		final int height = width;
