@@ -148,6 +148,10 @@ public final class CommandHandler {
 			return stats;
 		}
 		
+		if (directory.trim().isEmpty()) {
+			return "ERROR: Directory must be specified!";
+		}
+		
 		final Histogram rawTimeDifferencesHist = new Histogram(statistics.timeDifferences);
 		final Histogram timeDifferencesNoOutliersHist = new Histogram(statistics.timeDifferences.copyNoOutliers());
 		try {

@@ -2,6 +2,7 @@ package com.dezzy.dictionary.stats;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -119,21 +120,26 @@ public final class Histogram {
 	private static final BufferedImage draw(final int[] bins, final float binWidth) {
 		final int width = BIN_WIDTH_PIXELS * bins.length;
 		final int height = width;
+		final int heightMargin = BIN_WIDTH_PIXELS;
 		final int maxBinValue = max(bins);
 		
-		final BufferedImage histogramImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		final BufferedImage histogramImage = new BufferedImage(width, height + heightMargin, BufferedImage.TYPE_INT_RGB);
 		final Graphics2D hg2 = (Graphics2D) histogramImage.createGraphics();
-		hg2.setColor(Color.WHITE);
-		hg2.fillRect(0, 0, width, height);
+		hg2.setColor(Color.BLACK);
+		hg2.fillRect(0, 0, histogramImage.getWidth(), histogramImage.getHeight());
 		
-		hg2.setColor(Color.GREEN);
 		for (int i = 0; i < bins.length; i++) {
 			final int count = bins[i];
 			final int pixelHeight = (int) ((count / ((float) maxBinValue)) * height);
 			final int x = i * BIN_WIDTH_PIXELS;
-			final int y = width - pixelHeight;
+			final int y = width - pixelHeight + heightMargin;
 			
+			hg2.setColor(Color.GREEN);
 			hg2.fillRect(x, y, BIN_WIDTH_PIXELS, pixelHeight);
+			
+			hg2.setColor(Color.YELLOW);
+			hg2.drawRect(x, y, BIN_WIDTH_PIXELS, pixelHeight);
+			hg2.drawString(count + "", x + (BIN_WIDTH_PIXELS / 3), y - (BIN_WIDTH_PIXELS / 4));
 		}
 		
 		hg2.dispose();

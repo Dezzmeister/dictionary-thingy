@@ -8,9 +8,21 @@ import com.dezzy.dictionary.main.CommandHandler;
 import com.dezzy.dictionary.main.Definition;
 import com.dezzy.dictionary.main.Dictionary;
 
-public class AlbaniaUpdate {
+/**
+ * Temporary class, used to update the Kingdom Dictionary when the Dictionary class was updated to include entry dates.
+ *
+ * @author Joe Desmond
+ */
+public final class AlbaniaUpdate {
 	
-	public static void main(String[] args) throws ParseException, IOException {
+	/**
+	 * Main function.
+	 * 
+	 * @param args no arguments are expected
+	 * @throws ParseException if there is a problem parsing date strings
+	 * @throws IOException if there is a problem saving the dictionary
+	 */
+	public static final void main_TEMP(String[] args) throws ParseException, IOException {
 		final SimpleDateFormat sdf = new SimpleDateFormat("MM:dd:yyyy:hh:mm");
 		final Dictionary dict = new Dictionary("Ye Olde Royale Kingdom Dictionary");
 		
